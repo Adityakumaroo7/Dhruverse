@@ -305,7 +305,7 @@ if (googleOAuthBtn) {
             const { data, error } = await supabaseClient.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: window.location.origin
+                    redirectTo: 'https://dhruverse.vercel.app'
                 }
             });
             console.log("signInWithOAuth result:", { data, error });
