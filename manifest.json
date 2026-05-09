@@ -1,0 +1,16 @@
+{
+  "name": "Dhruverse Productivity",
+  "short_name": "Dhruverse",
+  "description": "High-performance productivity dashboard with To-Do, Calendar, and Timer.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#050505",
+  "icons": [
+    {
+      "src": "bg.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
