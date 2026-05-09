@@ -334,6 +334,7 @@ function setupSupabaseAuth() {
             };
             localStorage.setItem('dhruverse_user', JSON.stringify(state.user));
             showApp();
+            fetchTasks();
         } else {
             state.user = null;
             localStorage.removeItem('dhruverse_user');
@@ -372,7 +373,24 @@ function updateDateHeaders() {
     currentDateSubtitle.textContent = today.toLocaleDateString('en-US', options);
 }
 
-// === To-Do Logic ===
+// === To-Do Logic (Supabase Integrated) ===
+async function fetchTasks() {
+    if (!supabaseClient || !state.user) return;
+    try {
+        const { data, error } = await supabaseClient
+            .from('tasks')
+            .select('*')
+            .order('created_at', { ascending: false });
+        if (error) throw error;
+        
+        state.tasks = data || [];
+        renderTasks();
+        renderCalendar();
+    } catch (err) {
+        console.error("Error fetching tasks:", err);
+    }
+}
+
 function renderTasks() {
     taskListEl.innerHTML = '';
     
@@ -442,12 +460,12 @@ function handleSwipe(element, start, end) {
     }
 }
 
-function toggleTask(id) {
+async function toggleTask(id) {
     const task = state.tasks.find(t => t.id === id);
     if (task) {
+        // Optimistic UI update
         task.completed = !task.completed;
         
-        // Update stats if done today
         if (task.completed) {
             state.stats.tasksCompletedToday++;
         } else {
@@ -456,16 +474,45 @@ function toggleTask(id) {
         
         saveState();
         renderTasks();
-        renderCalendar(); // Update calendar indicators
+        renderCalendar();
         updateInsights();
+        
+        if (id.toString().startsWith('temp-')) return;
+
+        try {
+            const { error } = await supabaseClient
+                .from('tasks')
+                .update({ completed: task.completed })
+                .eq('id', id);
+            if (error) throw error;
+        } catch (err) {
+            console.error("Error toggling task:", err);
+            task.completed = !task.completed; // Revert
+            renderTasks();
+        }
     }
 }
 
-function deleteTask(id) {
+async function deleteTask(id) {
+    // Optimistic UI update
+    const previousTasks = [...state.tasks];
     state.tasks = state.tasks.filter(t => t.id !== id);
-    saveState();
     renderTasks();
     renderCalendar();
+    
+    if (id.toString().startsWith('temp-')) return;
+
+    try {
+        const { error } = await supabaseClient
+            .from('tasks')
+            .delete()
+            .eq('id', id);
+        if (error) throw error;
+    } catch (err) {
+        console.error("Error deleting task:", err);
+        state.tasks = previousTasks; // Revert
+        renderTasks();
+    }
 }
 
 addTaskBtn.addEventListener('click', () => {
@@ -478,21 +525,43 @@ cancelTaskBtn.addEventListener('click', () => {
     newTaskInput.value = '';
 });
 
-saveTaskBtn.addEventListener('click', () => {
+saveTaskBtn.addEventListener('click', async () => {
     const title = newTaskInput.value.trim();
-    if (title) {
+    if (title && supabaseClient && state.user) {
+        // Optimistic UI update
+        const tempId = 'temp-' + Date.now();
         const newTask = {
-            id: Date.now().toString(),
+            id: tempId,
             title,
             completed: false,
-            date: state.calendar.selectedDate.toISOString()
+            created_at: new Date().toISOString()
         };
-        state.tasks.push(newTask);
-        saveState();
+        state.tasks.unshift(newTask);
         renderTasks();
         renderCalendar();
         taskModal.classList.add('hidden');
         newTaskInput.value = '';
+
+        try {
+            const { data, error } = await supabaseClient
+                .from('tasks')
+                .insert([{ user_id: state.user.id, title, completed: false }])
+                .select()
+                .single();
+                
+            if (error) throw error;
+            
+            // Replace temp ID with real DB UUID
+            state.tasks = state.tasks.map(t => t.id === tempId ? data : t);
+            renderTasks();
+        } catch (err) {
+            console.error("Error adding task:", err);
+            state.tasks = state.tasks.filter(t => t.id !== tempId); // Revert
+            renderTasks();
+            alert("Failed to save task to database.");
+        }
+    } else if (!state.user) {
+        alert("Please log in to save tasks.");
     }
 });
 
@@ -544,7 +613,7 @@ function renderCalendar() {
         
         // Check for events/tasks on this day
         const hasEvent = state.tasks.some(t => {
-            const tDate = new Date(t.date);
+            const tDate = new Date(t.created_at || t.date);
             return tDate.getDate() === day && tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear;
         });
         
@@ -570,7 +639,7 @@ function renderCalendarEventsForSelected() {
     selectedDateDisplay.textContent = sel.toLocaleDateString('en-US', options);
     
     const dayTasks = state.tasks.filter(t => {
-        const tDate = new Date(t.date);
+        const tDate = new Date(t.created_at || t.date);
         return tDate.getDate() === sel.getDate() && tDate.getMonth() === sel.getMonth() && tDate.getFullYear() === sel.getFullYear();
     });
     
