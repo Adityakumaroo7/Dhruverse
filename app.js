@@ -1,10 +1,7 @@
 // State Management (Mocking Zustand/Supabase for now, can be replaced easily)
 const state = {
     user: JSON.parse(localStorage.getItem('dhruverse_user')) || null,
-    tasks: JSON.parse(localStorage.getItem('dhruverse_tasks')) || [
-        { id: '1', title: 'Review Q3 Metrics', completed: true, date: new Date().toISOString() },
-        { id: '2', title: 'Design System Update', completed: false, date: new Date().toISOString() }
-    ],
+    tasks: [],
     timer: {
         focusDuration: 25,
         breakDuration: 5,
@@ -18,10 +15,7 @@ const state = {
         currentYear: new Date().getFullYear(),
         selectedDate: new Date()
     },
-    habits: JSON.parse(localStorage.getItem('dhruverse_habits')) || [
-        { id: 'h1', title: 'Drink Water (2L)', completed: false },
-        { id: 'h2', title: 'Read 10 Pages', completed: false }
-    ],
+    habits: [],
     stats: JSON.parse(localStorage.getItem('dhruverse_stats')) || {
         focusMinutesToday: 0,
         tasksCompletedToday: 0,
@@ -41,8 +35,6 @@ function checkNewDay() {
 }
 
 function saveState() {
-    localStorage.setItem('dhruverse_tasks', JSON.stringify(state.tasks));
-    localStorage.setItem('dhruverse_habits', JSON.stringify(state.habits));
     localStorage.setItem('dhruverse_stats', JSON.stringify(state.stats));
 }
 
@@ -334,7 +326,7 @@ function setupSupabaseAuth() {
             };
             localStorage.setItem('dhruverse_user', JSON.stringify(state.user));
             showApp();
-            fetchTasks();
+            fetchData();
         } else {
             state.user = null;
             localStorage.removeItem('dhruverse_user');
@@ -374,20 +366,28 @@ function updateDateHeaders() {
 }
 
 // === To-Do Logic (Supabase Integrated) ===
-async function fetchTasks() {
+async function fetchData() {
     if (!supabaseClient || !state.user) return;
     try {
-        const { data, error } = await supabaseClient
+        const { data: tasksData, error: tasksError } = await supabaseClient
             .from('tasks')
             .select('*')
             .order('created_at', { ascending: false });
-        if (error) throw error;
-        
-        state.tasks = data || [];
+        if (tasksError) throw tasksError;
+        state.tasks = tasksData || [];
+
+        const { data: habitsData, error: habitsError } = await supabaseClient
+            .from('habits')
+            .select('*')
+            .order('created_at', { ascending: true });
+        if (habitsError) throw habitsError;
+        state.habits = habitsData || [];
+
         renderTasks();
+        renderHabits();
         renderCalendar();
     } catch (err) {
-        console.error("Error fetching tasks:", err);
+        console.error("Error fetching data:", err);
     }
 }
 
@@ -788,31 +788,76 @@ function renderHabits() {
     });
 
     document.querySelectorAll('#habit-list .checkbox-wrapper').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', async (e) => {
             const id = e.currentTarget.getAttribute('data-id');
             const h = state.habits.find(h => h.id === id);
             h.completed = !h.completed;
-            saveState();
             renderHabits();
+            
+            if (id.toString().startsWith('temp-')) return;
+            try {
+                const { error } = await supabaseClient
+                    .from('habits')
+                    .update({ completed: h.completed })
+                    .eq('id', id);
+                if (error) throw error;
+            } catch (err) {
+                console.error("Error toggling habit:", err);
+                h.completed = !h.completed;
+                renderHabits();
+            }
         });
     });
 
     document.querySelectorAll('.delete-habit-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', async (e) => {
             const id = e.currentTarget.getAttribute('data-id');
+            const prevHabits = [...state.habits];
             state.habits = state.habits.filter(h => h.id !== id);
-            saveState();
             renderHabits();
+            
+            if (id.toString().startsWith('temp-')) return;
+            try {
+                const { error } = await supabaseClient
+                    .from('habits')
+                    .delete()
+                    .eq('id', id);
+                if (error) throw error;
+            } catch (err) {
+                console.error("Error deleting habit:", err);
+                state.habits = prevHabits;
+                renderHabits();
+            }
         });
     });
 }
 
-addHabitBtn.addEventListener('click', () => {
+addHabitBtn.addEventListener('click', async () => {
     const title = prompt("Enter a new daily habit:");
-    if (title && title.trim()) {
-        state.habits.push({ id: Date.now().toString(), title: title.trim(), completed: false });
-        saveState();
+    if (title && title.trim() && supabaseClient && state.user) {
+        const tempId = 'temp-' + Date.now();
+        const newHabit = { id: tempId, title: title.trim(), completed: false };
+        state.habits.push(newHabit);
         renderHabits();
+        
+        try {
+            const { data, error } = await supabaseClient
+                .from('habits')
+                .insert([{ user_id: state.user.id, title: title.trim(), completed: false }])
+                .select()
+                .single();
+            if (error) throw error;
+            
+            state.habits = state.habits.map(h => h.id === tempId ? data : h);
+            renderHabits();
+        } catch (err) {
+            console.error("Error adding habit:", err);
+            state.habits = state.habits.filter(h => h.id !== tempId);
+            renderHabits();
+            alert("Failed to save habit to database.");
+        }
+    } else if (!state.user) {
+        alert("Please log in to save habits.");
     }
 });
 
