@@ -305,7 +305,7 @@ if (googleOAuthBtn) {
             const { data, error } = await supabaseClient.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: 'https://dhruverse.com'
+                    redirectTo: window.location.origin
                 }
             });
             console.log("signInWithOAuth result:", { data, error });
