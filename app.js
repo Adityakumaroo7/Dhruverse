@@ -46,6 +46,78 @@ function saveState() {
     localStorage.setItem('dhruverse_stats', JSON.stringify(state.stats));
 }
 
+// === DOM Elements ===
+// Auth
+const authScreen = document.getElementById('auth-screen');
+const appLayout = document.getElementById('app-layout');
+const authForm = document.getElementById('auth-form');
+const authMessage = document.getElementById('auth-message');
+const toggleAuthModeBtn = document.getElementById('toggle-auth-mode');
+let isSignUpMode = false;
+
+// Nav & Views
+const navItems = document.querySelectorAll('.nav-item');
+const views = document.querySelectorAll('.view');
+const currentDateTitle = document.getElementById('current-date-title');
+const currentDateSubtitle = document.getElementById('current-date-subtitle');
+
+// To-Do
+const taskListEl = document.getElementById('task-list');
+const addTaskBtn = document.getElementById('add-task-btn');
+const taskModal = document.getElementById('task-modal');
+const saveTaskBtn = document.getElementById('save-task-btn');
+const cancelTaskBtn = document.getElementById('cancel-task-btn');
+const newTaskInput = document.getElementById('new-task-title');
+
+// Calendar
+const calendarGrid = document.getElementById('calendar-grid');
+const monthYearDisplay = document.getElementById('month-year-display');
+const prevMonthBtn = document.getElementById('prev-month');
+const nextMonthBtn = document.getElementById('next-month');
+const selectedDateDisplay = document.getElementById('selected-date-display');
+const eventListEl = document.getElementById('event-list');
+
+// Timer
+const timerDisplay = document.getElementById('time-left');
+const timerModeDisplay = document.getElementById('timer-mode');
+const timerToggleBtn = document.getElementById('timer-toggle-btn');
+const timerResetBtn = document.getElementById('timer-reset-btn');
+const focusSlider = document.getElementById('focus-slider');
+const breakSlider = document.getElementById('break-slider');
+const focusDurVal = document.getElementById('focus-dur-val');
+const breakDurVal = document.getElementById('break-dur-val');
+const progressCircle = document.querySelector('.progress-ring__circle');
+const timerChime = document.getElementById('timer-chime');
+
+// Insights & Habits
+const totalFocusTimeEl = document.getElementById('total-focus-time');
+const tasksCompletedCountEl = document.getElementById('tasks-completed-count');
+const productivityScoreEl = document.getElementById('productivity-score');
+const productivityBar = document.getElementById('productivity-bar');
+const habitListEl = document.getElementById('habit-list');
+const addHabitBtn = document.getElementById('add-habit-btn');
+
+// Settings Modal
+const openSettingsBtn = document.getElementById('open-settings-btn');
+const closeSettingsBtn = document.getElementById('close-settings-btn');
+const settingsModal = document.getElementById('settings-modal');
+const themeToggle = document.getElementById('theme-toggle');
+const themeKnob = document.getElementById('theme-toggle-knob');
+const languageSelect = document.getElementById('language-select');
+const logoutBtn = document.getElementById('logout-btn');
+
+const profileUpload = document.getElementById('profile-upload');
+const headerAvatarImg = document.getElementById('header-avatar-img');
+const headerAvatarIcon = document.getElementById('header-avatar-icon');
+const settingsAvatarImg = document.getElementById('settings-avatar-img');
+const settingsAvatarIcon = document.getElementById('settings-avatar-icon');
+
+// Translation Dictionary
+const i18n = {
+    en: { settings: "Settings", changePhoto: "Change Photo", theme: "Theme", language: "Language", logout: "Log Out" },
+    es: { settings: "Ajustes", changePhoto: "Cambiar Foto", theme: "Tema", language: "Idioma", logout: "Cerrar Sesión" },
+    fr: { settings: "Paramètres", changePhoto: "Changer Photo", theme: "Thème", language: "Langue", logout: "Déconnexion" }
+};
 // === Preferences Logic ===
 function loadPreferences() {
     // Theme
@@ -155,78 +227,6 @@ if (window.supabase) {
     });
 }
 
-// === DOM Elements ===
-// Auth
-const authScreen = document.getElementById('auth-screen');
-const appLayout = document.getElementById('app-layout');
-const authForm = document.getElementById('auth-form');
-const authMessage = document.getElementById('auth-message');
-const toggleAuthModeBtn = document.getElementById('toggle-auth-mode');
-let isSignUpMode = false;
-
-// Nav & Views
-const navItems = document.querySelectorAll('.nav-item');
-const views = document.querySelectorAll('.view');
-const currentDateTitle = document.getElementById('current-date-title');
-const currentDateSubtitle = document.getElementById('current-date-subtitle');
-
-// To-Do
-const taskListEl = document.getElementById('task-list');
-const addTaskBtn = document.getElementById('add-task-btn');
-const taskModal = document.getElementById('task-modal');
-const saveTaskBtn = document.getElementById('save-task-btn');
-const cancelTaskBtn = document.getElementById('cancel-task-btn');
-const newTaskInput = document.getElementById('new-task-title');
-
-// Calendar
-const calendarGrid = document.getElementById('calendar-grid');
-const monthYearDisplay = document.getElementById('month-year-display');
-const prevMonthBtn = document.getElementById('prev-month');
-const nextMonthBtn = document.getElementById('next-month');
-const selectedDateDisplay = document.getElementById('selected-date-display');
-const eventListEl = document.getElementById('event-list');
-
-// Timer
-const timerDisplay = document.getElementById('time-left');
-const timerModeDisplay = document.getElementById('timer-mode');
-const timerToggleBtn = document.getElementById('timer-toggle-btn');
-const timerResetBtn = document.getElementById('timer-reset-btn');
-const focusSlider = document.getElementById('focus-slider');
-const breakSlider = document.getElementById('break-slider');
-const focusDurVal = document.getElementById('focus-dur-val');
-const breakDurVal = document.getElementById('break-dur-val');
-const progressCircle = document.querySelector('.progress-ring__circle');
-const timerChime = document.getElementById('timer-chime');
-
-// Insights & Habits
-const totalFocusTimeEl = document.getElementById('total-focus-time');
-const tasksCompletedCountEl = document.getElementById('tasks-completed-count');
-const productivityScoreEl = document.getElementById('productivity-score');
-const productivityBar = document.getElementById('productivity-bar');
-const habitListEl = document.getElementById('habit-list');
-const addHabitBtn = document.getElementById('add-habit-btn');
-
-// Settings Modal
-const openSettingsBtn = document.getElementById('open-settings-btn');
-const closeSettingsBtn = document.getElementById('close-settings-btn');
-const settingsModal = document.getElementById('settings-modal');
-const themeToggle = document.getElementById('theme-toggle');
-const themeKnob = document.getElementById('theme-toggle-knob');
-const languageSelect = document.getElementById('language-select');
-const logoutBtn = document.getElementById('logout-btn');
-
-const profileUpload = document.getElementById('profile-upload');
-const headerAvatarImg = document.getElementById('header-avatar-img');
-const headerAvatarIcon = document.getElementById('header-avatar-icon');
-const settingsAvatarImg = document.getElementById('settings-avatar-img');
-const settingsAvatarIcon = document.getElementById('settings-avatar-icon');
-
-// Translation Dictionary
-const i18n = {
-    en: { settings: "Settings", changePhoto: "Change Photo", theme: "Theme", language: "Language", logout: "Log Out" },
-    es: { settings: "Ajustes", changePhoto: "Cambiar Foto", theme: "Tema", language: "Idioma", logout: "Cerrar Sesión" },
-    fr: { settings: "Paramètres", changePhoto: "Changer Photo", theme: "Thème", language: "Langue", logout: "Déconnexion" }
-};
 
 // === Initialize App State ===
 function init() {
@@ -288,27 +288,35 @@ authForm.addEventListener('submit', (e) => {
 
 // === Auth Logic (Supabase OAuth) ===
 const googleOAuthBtn = document.getElementById('google-oauth-btn');
+console.log("googleOAuthBtn element:", googleOAuthBtn);
 
 if (googleOAuthBtn) {
-    googleOAuthBtn.addEventListener('click', async () => {
+    googleOAuthBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        console.log("Google OAuth button clicked!");
         if (!supabaseClient) {
+            console.error('Supabase client not initialized.');
             alert('Error: Supabase client not initialized.');
             return;
         }
         
         try {
+            console.log("Attempting signInWithOAuth...");
             const { data, error } = await supabaseClient.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
                     redirectTo: 'https://dhruverse.com'
                 }
             });
+            console.log("signInWithOAuth result:", { data, error });
             if (error) throw error;
         } catch (error) {
             console.error('OAuth error:', error);
-            alert('Failed to initialize Google Login.');
+            alert('Failed to initialize Google Login. Check console.');
         }
     });
+} else {
+    console.error("google-oauth-btn NOT FOUND in the DOM!");
 }
 
 // Session Restoration Check
