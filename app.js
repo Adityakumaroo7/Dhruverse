@@ -320,25 +320,30 @@ if (googleOAuthBtn) {
 }
 
 // Session Restoration Check
-async function checkSupabaseSession() {
+function setupSupabaseAuth() {
     if (!supabaseClient) return;
     
-    // Supabase automatically parses the URL hash after an OAuth redirect
-    const { data: { session }, error } = await supabaseClient.auth.getSession();
-    
-    if (session) {
-        state.user = {
-            id: session.user.id,
-            email: session.user.email,
-            name: session.user.user_metadata?.full_name || 'Dhruverse User'
-        };
-        localStorage.setItem('dhruverse_user', JSON.stringify(state.user));
-        showApp();
-    }
+    // Listen for auth events (like successful OAuth redirects)
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+        console.log("Supabase Auth Event:", event);
+        if (session) {
+            state.user = {
+                id: session.user.id,
+                email: session.user.email,
+                name: session.user.user_metadata?.full_name || 'Dhruverse User'
+            };
+            localStorage.setItem('dhruverse_user', JSON.stringify(state.user));
+            showApp();
+        } else {
+            state.user = null;
+            localStorage.removeItem('dhruverse_user');
+            showAuth();
+        }
+    });
 }
 
-// Check session on load
-checkSupabaseSession();
+// Initialize Auth Listener
+setupSupabaseAuth();
 // === Navigation Logic ===
 navItems.forEach(item => {
     item.addEventListener('click', () => {
