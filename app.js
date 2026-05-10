@@ -732,4 +732,49 @@ addHabitBtn.addEventListener('click', async () => {
         alert("Please log in to save habits.");
     }
 });
+const miniTimerDisplay = document.getElementById('mini-timer-display');
+const miniTimerToggle = document.getElementById('mini-timer-toggle');
+const presetBtns = document.querySelectorAll('.preset-btn');
+let miniTimerInterval = null;
+let miniTimeLeft = 25 * 60;
+let isMiniTimerRunning = false;
+function updateMiniTimerUI() {
+    const m = Math.floor(miniTimeLeft / 60);
+    const s = miniTimeLeft % 60;
+    miniTimerDisplay.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+}
+presetBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        if (isMiniTimerRunning) return;
+        presetBtns.forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        miniTimeLeft = parseInt(e.target.getAttribute('data-time')) * 60;
+        updateMiniTimerUI();
+    });
+});
+miniTimerToggle.addEventListener('click', () => {
+    if (isMiniTimerRunning) {
+        clearInterval(miniTimerInterval);
+        isMiniTimerRunning = false;
+        miniTimerToggle.innerHTML = '<i class="ph ph-play" style="font-size: 1.5rem;"></i>';
+        document.body.classList.remove('timer-active-glow');
+    } else {
+        isMiniTimerRunning = true;
+        miniTimerToggle.innerHTML = '<i class="ph ph-pause" style="font-size: 1.5rem;"></i>';
+        document.body.classList.add('timer-active-glow');
+        miniTimerInterval = setInterval(() => {
+            miniTimeLeft--;
+            if (miniTimeLeft <= 0) {
+                clearInterval(miniTimerInterval);
+                isMiniTimerRunning = false;
+                miniTimerToggle.innerHTML = '<i class="ph ph-play" style="font-size: 1.5rem;"></i>';
+                document.body.classList.remove('timer-active-glow');
+                miniTimeLeft = 25 * 60;
+                presetBtns.forEach(b => b.classList.remove('active'));
+                presetBtns[0].classList.add('active');
+            }
+            updateMiniTimerUI();
+        }, 1000);
+    }
+});
 init();
