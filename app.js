@@ -148,10 +148,22 @@ profileUpload.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (file) {
         const reader = new FileReader();
-        reader.onload = (event) => {
+        reader.onload = async (event) => {
             const base64Str = event.target.result;
             localStorage.setItem('dhruverse_profile_pic', base64Str);
             setProfilePicUI(base64Str);
+            
+            if (state.user && supabaseClient) {
+                try {
+                    const { error } = await supabaseClient
+                        .from('profiles')
+                        .update({ avatar_url: base64Str })
+                        .eq('id', state.user.id);
+                    if (error) throw error;
+                } catch (err) {
+                    console.error("Error saving profile picture to Supabase:", err);
+                }
+            }
         };
         reader.readAsDataURL(file);
     }
@@ -257,7 +269,7 @@ function setupSupabaseAuth() {
     supabaseClient.auth.onAuthStateChange(async (event, session) => {
         if (session) {
             let fullName = session.user.user_metadata?.full_name || 'Dhruverse User';
-            let avatarUrl = null;
+            let avatarUrl = session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture || null;
             try {
                 const { data, error } = await supabaseClient
                     .from('profiles')
