@@ -152,7 +152,6 @@ profileUpload.addEventListener('change', (e) => {
             const base64Str = event.target.result;
             localStorage.setItem('dhruverse_profile_pic', base64Str);
             setProfilePicUI(base64Str);
-            
             if (state.user && supabaseClient) {
                 try {
                     const { error } = await supabaseClient
@@ -776,5 +775,20 @@ miniTimerToggle.addEventListener('click', () => {
             updateMiniTimerUI();
         }, 1000);
     }
+});
+const insightTabBtns = document.querySelectorAll('.insight-tab-btn');
+const insightTabContents = document.querySelectorAll('.insight-tab-content');
+insightTabBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        insightTabBtns.forEach(b => b.classList.remove('active'));
+        insightTabContents.forEach(c => {
+            c.classList.add('hidden');
+            c.classList.remove('active');
+        });
+        e.target.classList.add('active');
+        const targetId = e.target.getAttribute('data-target');
+        document.getElementById(targetId).classList.remove('hidden');
+        document.getElementById(targetId).classList.add('active');
+    });
 });
 init();
